@@ -10,7 +10,58 @@
     <!--[if lt IE 9]>
     <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
-    <title>Mathjax by benetech</title>
+    <title>MathJax / MathSpeak / Speak.js Integration Demo by gcapiel</title>
+    	<script type="text/javascript" src="unpackedlanguagebuffer/MathJax.js?config=MML_HTMLorMML,lang_enus"></script>
+	<script src="speakClient.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js" type="text/javascript"></script>
+    <script type="text/javascript">
+      function display() {
+        var str = document.getElementById("equation_editor").value;
+        var svg_node = document.getElementById("svg_node");
+        svg_node.innerHTML = '`' + str + '`';
+        MathJax.Hub.Typeset(svg_node);
+      }
+      <!-- https://groups.google.com/d/topic/mathjax-users/unL8IjcrTto/discussion -->
+      function toMathML(jax, callback) {
+        var mml;
+        try {
+          mml = jax.root.toMathML("");
+        } catch(err) {
+          if (!err.restart) { throw err; }
+          return MathJax.Callback.After([toMathML, jax, callback], err, restart);
+        }
+        MathJax.Callback(callback)(mml);
+      }
+      function clearDescription() {
+        var description_node = document.getElementById("description");
+        description_node.value = '';
+      }
+      function appendToDescription() {
+        var svg_node = document.getElementById("svg_node");
+        MathJax.Hub.Queue(function() {
+          var jaxen = MathJax.Hub.getAllJax(svg_node);
+          toMathML(jaxen[0], function(mml) {
+            var str = document.getElementById("equation_editor").value;
+            var description_node = document.getElementById("description");
+            $.ajax({
+              url: "service?equation=" + str,
+              success: function(mde_description) {
+                description_node.value += mde_description;
+                description_node.value += "\n";
+                description_node.value += mml;
+              },
+              error: function() {
+                description_node.value += mml;
+              }
+              });
+          })});
+      }
+      function copyMML() {
+		document.getElementById("mathmlinput").innerHTML = document.getElementById("description").value;
+		document.getElementById("mathspeak").innerHTML = '';
+        MathJax.Hub.Typeset(document.getElementById("mathmlinput"));
+	 }
+      </script>
   </head>
 
   <body>
@@ -18,49 +69,54 @@
       <div class="inner">
 
         <header>
-          <h1>Mathjax</h1>
-          <h2>MathJax with MathSpeak for each expression</h2>
+          <h1>MathJax / MathSpeak / Speak.js Integration Demo</h1>
+          <h2>Voicing Math for the Blind and Visually Impaired</h2>
         </header>
 
         <section id="downloads" class="clearfix">
-          <a href="https://github.com/benetech/mathjax/zipball/master" id="download-zip" class="button"><span>Download .zip</span></a>
-          <a href="https://github.com/benetech/mathjax/tarball/master" id="download-tar-gz" class="button"><span>Download .tar.gz</span></a>
-          <a href="https://github.com/benetech/mathjax" id="view-on-github" class="button"><span>View on GitHub</span></a>
+          <a href="https://github.com/gcapiel/mathjax/zipball/master" id="download-zip" class="button"><span>Download .zip</span></a>
+          <a href="https://github.com/gcapiel/mathjax/tarball/master" id="download-tar-gz" class="button"><span>Download .tar.gz</span></a>
+          <a href="https://github.com/gcapiel/mathjax" id="view-on-github" class="button"><span>View on GitHub</span></a>
         </section>
 
         <hr>
 
         <section id="main_content">
-          <h3>Welcome to GitHub Pages.</h3>
-
-<p>This automatic page generator is the easiest way to create beautiful pages for all of your projects. Author your page content here using GitHub Flavored Markdown, select a template crafted by a designer, and publish. After your page is generated, you can check out the new branch:</p>
-
-<pre><code>$ cd your_repo_root/repo_name
-$ git fetch origin
-$ git checkout gh-pages
-</code></pre>
-
-<p>If you're using the GitHub for Mac, simply sync your repository and you'll see the new branch.</p>
-
-<h3>Designer Templates</h3>
-
-<p>We've crafted some handsome templates for you to use. Go ahead and continue to layouts to browse through them. You can easily go back to edit your page before publishing. After publishing your page, you can revisit the page generator and switch to another theme. Your Page content will be preserved if it remained markdown format.</p>
-
-<h3>Rather Drive Stick?</h3>
-
-<p>If you prefer to not use the automatic generator, push a branch named <code>gh-pages</code> to your repository to create a page manually. In addition to supporting regular HTML content, GitHub Pages support Jekyll, a simple, blog aware static site generator written by our own Tom Preston-Werner. Jekyll makes it easy to create site-wide headers and footers without having to copy them across every page. It also offers intelligent blog support and other advanced templating features.</p>
-
-<h3>Authors and Contributors</h3>
-
-<p>You can <a href="https://github.com/blog/821" class="user-mention">@mention</a> a GitHub username to generate a link to their profile. The resulting <code>&lt;a&gt;</code> element will link to the contributor's GitHub Profile. For example: In 2007, Chris Wanstrath (<a href="https://github.com/defunkt" class="user-mention">@defunkt</a>), PJ Hyett (<a href="https://github.com/pjhyett" class="user-mention">@pjhyett</a>), and Tom Preston-Werner (<a href="https://github.com/mojombo" class="user-mention">@mojombo</a>) founded GitHub.</p>
-
-<h3>Support or Contact</h3>
-
-<p>Having trouble with Pages? Check out the documentation at <a href="http://help.github.com/pages">http://help.github.com/pages</a> or contact <a href="mailto:support@github.com">support@github.com</a> and we’ll help you sort it out.</p>
+<div id="audio"></div>
+<b>MathML Code:</b><br>
+<textarea id="description" rows="10" cols="80"></textarea>
+<button onclick=copyMML();>Update Math</button>
+<br><br>
+<table border="1"><tr><td valign="center">
+<div id="mathmlinput">
+<math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mstyle displaystyle="true">
+    <mrow>
+      <mi>f</mi>
+        <mo>(</mo>
+        <mi>x</mi>
+        <mo>)</mo>
+    </mrow>
+    <mo>&#x2248;</mo>
+    <msup>
+      <mi>x</mi>
+      <mn>3</mn>
+    </msup>
+    <mo>+</mo>
+			<mfrac>
+				<mn>8</mn>
+				<mn>10</mn>
+			</mfrac>
+  </mstyle>
+</math>
+</div>
+</td><td valign="top">
+	<div id="mathspeak"></div>
+</td></tr></table>
         </section>
 
         <footer>
-          Mathjax is maintained by <a href="https://github.com/benetech">benetech</a><br>
+          MathJax / MathSpeak / Speak.js Integration Demo is maintained by <a href="https://github.com/gcapiel">gcapiel</a><br>
           This page was generated by <a href="http://pages.github.com">GitHub Pages</a>. Tactile theme by <a href="http://twitter.com/jasonlong">Jason Long</a>.
         </footer>
 
